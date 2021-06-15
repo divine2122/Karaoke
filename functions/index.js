@@ -84,7 +84,8 @@ app.get('/home', (req, res) => {
       .then((response) => {
         const accessToken = response.access_token
         // redirect the user to the welcome page, along with the access token
-        res.redirect(`/lyric?access_token=${accessToken}`)
+        //res.redirect(`/lyric?access_token=${accessToken}`)
+        testFunc(accessToken)
       })
       .catch(e => {
           console.log(e)
@@ -92,8 +93,9 @@ app.get('/home', (req, res) => {
           });
 })
 
-  app.get('/lyric', (req, res) => {
-    const accessToken = req.query.access_token 
+function testFunc(accessToken){
+  //app.get('/lyric', (req, res) => {
+    //const accessToken = req.query.access_token 
     const uri = `https://api.genius.com/songs/3035222`
 
     const options = {
@@ -103,9 +105,10 @@ app.get('/home', (req, res) => {
           },
     };
     
-    return fetch(uri, options).then((res) => {
+    return fetch(uri, options).then(async (res) =>  {
+      var output = await res.json()
         if (res.ok) {
-            return res.json();
+            return output
         } else if (res.status == 409) {
             throw new Error('IdP configuration already exists. Update it instead.');
         } else {
@@ -113,8 +116,11 @@ app.get('/home', (req, res) => {
         }
     })
         .then(json => {
-          res.send(json);  // will send status 200 and the json as body 
-            return fetch("https://genius.com/Kendrick-lamar-dna-lyrics", {
+          var chosen_song_path = json.response.song.path
+          
+          //res.send(json);  // will send status 200 and the json as body 
+          //this will eventually fetch rapgenius title to populate user chosen link from above fetch
+            return fetch(`https://genius.com${chosen_song_path}`, {
               method: 'GET',
             })
               .then(response => {
@@ -132,10 +138,10 @@ app.get('/home', (req, res) => {
         })
         .catch(e => {
           console.log(e)
-          res.sendStatus(400);  //or whatever status code you want to return
+         // res.sendStatus(400);  //or whatever status code you want to return
         });;
-  })
-
+  //})
+}
 
   app.get('/translate', (req, res) => {
 
