@@ -6,16 +6,21 @@ const port = 3035
 var http = require('http');
 const https = require('https');
 
-const cors = require('cors')({origin: true});
+const cors = require('cors')//({origin: true});
+app.use(cors({ origin: true }));
+
 var axios = require('axios');
 const fetch = require('node-fetch');
 const cheerio = require('cheerio');
+const { access } = require('fs');
 
 
 
 const clientId = 'zMNZDYvktFEeAK3Qujfyrt5ActZwYpvvlJwATeprRbLAz3hxp2rZpX3YSHqzRhDC';
 const clientSecret = 'gfYzi2KJWBeWNRxklmBeOvSeYkaPqPlp1-AWRR4rEp2x4aLB-kkBHbUVesAg84UQdYAMz9ood7Ygn2-iCrMK0Q';
-const redirectUri = 'http://localhost:3035/home';
+//const redirectUri = 'http://localhost:3035/home'; //for functions
+const redirectUri = 'http://localhost:3000/landing'; //for react site
+
 const grant_type = "authorization_code";
 const response_type = "code";
 
@@ -71,29 +76,38 @@ app.get('/auth', (req, res) => {
   // })
   
   
-app.get('/home', (req, res) => {
+app.get('/home', async (req, res) => { //change name to auth_success
     const requestToken = req.query.code
-
-  fetch(`https://api.genius.com/oauth/token?client_id=${clientId}&client_secret=${clientSecret}&code=${requestToken}&grant_type=${grant_type}&redirect_uri=${redirectUri}&response_type=${response_type}`, {
+  console.log('hit backend')
+  return await fetch(`https://api.genius.com/oauth/token?client_id=${clientId}&client_secret=${clientSecret}&code=${requestToken}&grant_type=${grant_type}&redirect_uri=${redirectUri}&response_type=${response_type}`, {
           method: 'post',
           headers: { 'Content-Type': 'application/json' },
         })
+
     .then((res)=>{
+      //console.log('test5', res)
         return res.json()
     }) 
       .then((response) => {
+
         const accessToken = response.access_token
         // redirect the user to the welcome page, along with the access token
-        res.redirect(`/lyric?access_token=${accessToken}`)
+        //res.redirect(`/lyric?access_token=${accessToken}`)
+        //res.redirect(`http://localhost:3000`)
+
+        //testFunc(accessToken).then(res => console.log('finaltest',res));
+        testFunc(accessToken).then(output => res.status(200).send({ data: output}));
+
+        //return res.status(200).send({ data: testFunc(accessToken)});
+        //return testFunc(accessToken)
       })
       .catch(e => {
           console.log(e)
-          res.sendStatus(400);
+          return res.sendStatus(400);
           });
 })
 
-  app.get('/lyric', (req, res) => {
-    const accessToken = req.query.access_token 
+async function testFunc(accessToken){
     const uri = `https://api.genius.com/songs/3035222`
 
     const options = {
@@ -103,18 +117,23 @@ app.get('/home', (req, res) => {
           },
     };
     
-    return fetch(uri, options).then((res) => {
+    return fetch(uri, options).then(async (res) =>  {
+      var output = await res.json()
         if (res.ok) {
-            return res.json();
+
+            return output
         } else if (res.status == 409) {
             throw new Error('IdP configuration already exists. Update it instead.');
         } else {
             throw new Error(res.statusText)
+            
         }
     })
         .then(json => {
-          res.send(json);  // will send status 200 and the json as body 
-            return fetch("https://genius.com/Kendrick-lamar-dna-lyrics", {
+
+          var chosen_song_path = json.response.song.path          
+          //this will eventually fetch rapgenius path to populate user chosen link from above fetch
+            return fetch(`https://genius.com${chosen_song_path}`, {
               method: 'GET',
             })
               .then(response => {
@@ -122,9 +141,11 @@ app.get('/home', (req, res) => {
                 throw new Error('Could not get song url ...')
               })
                 .then((htmlText) => {
+
                   const $ = cheerio.load(htmlText)
                   const lyrics = $('.lyrics').text()
-                  console.log(lyrics)
+                  lyrics ? lyrics : 'EMPTY' 
+                  console.log('test1', lyrics)
                   return {
                     lyrics,
                   }
@@ -132,10 +153,10 @@ app.get('/home', (req, res) => {
         })
         .catch(e => {
           console.log(e)
-          res.sendStatus(400);  //or whatever status code you want to return
+          return e
         });;
-  })
 
+}
 
   app.get('/translate', (req, res) => {
 
@@ -159,6 +180,12 @@ app.get('/home', (req, res) => {
           res.send(json) //return json to browser
         })
   })
+
+
+app.get('/landing', (req, res) => {
+
+
+})
 
 app.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`)
