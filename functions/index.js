@@ -33,49 +33,6 @@ app.get('/auth', (req, res) => {
   })
   
 
-
-  // app.get('/home', (req, res) => {
-  //   const requestToken = req.query.code
-  //   console.log(requestToken)
-
-  //   const uri = `https://api.genius.com/oauth/token`;
-  //     const options = {
-  //         method: 'POST',
-  //         body: JSON.stringify({
-  //               "code": requestToken,
-  //               "client_id": clientId,
-  //               "client_secret": clientSecret,
-  //               "redirect_uri": redirectUri,
-  //               "response_type": response_type,
-  //               "grant_type": grant_type,
-  //         }),
-  //     };
-  //     return fetch(uri, options)
-  //       .then((res) => {
-  //         console.log(res)
-  //           if (res.ok) {
-  //               return res.json();
-  //           } else if (res.status == 409) {
-  //               throw new Error('IdP configuration already exists. Update it instead.');
-  //           } else {
-  //             console.log('test spot')
-  //             throw new Error(res.statusText)
-  //           }
-  //       })
-  //         .then(json => {
-  //           const accessToken = json.access_token
-  //           res.redirect(`/lyric?access_token=${accessToken}`)
-
-  //           //res.send(json);  // will send status 200 and the json as body 
-  //         })
-  //         .catch(e => {
-  //           console.log(e)
-  //           res.sendStatus(400);  //or whatever status code you want to return
-  //         });;
-
-  // })
-  
-  
 app.get('/home', async (req, res) => { //change name to auth_success
     const requestToken = req.query.code
   console.log('hit backend')
@@ -85,7 +42,6 @@ app.get('/home', async (req, res) => { //change name to auth_success
         })
 
     .then((res)=>{
-      //console.log('test5', res)
         return res.json()
     }) 
       .then((response) => {
@@ -131,7 +87,7 @@ async function testFunc(accessToken){
     })
         .then(json => {
 
-          var chosen_song_path = json.response.song.path          
+          var chosen_song_path = json.response.song.path  
           //this will eventually fetch rapgenius path to populate user chosen link from above fetch
             return fetch(`https://genius.com${chosen_song_path}`, {
               method: 'GET',
@@ -141,9 +97,14 @@ async function testFunc(accessToken){
                 throw new Error('Could not get song url ...')
               })
                 .then((htmlText) => {
-
                   const $ = cheerio.load(htmlText)
+
                   var lyrics = $('.lyrics').text()
+
+                  if (!lyrics){
+                    var lyrics = $('[class^=Lyrics__Container]').text()
+                  }
+
                   lyrics = lyrics ? lyrics : 'RETRIEVAL ERROR' 
                   console.log('test1', lyrics)
                   return {
