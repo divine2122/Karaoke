@@ -143,8 +143,8 @@ async function testFunc(accessToken){
                 .then((htmlText) => {
 
                   const $ = cheerio.load(htmlText)
-                  const lyrics = $('.lyrics').text()
-                  lyrics ? lyrics : 'EMPTY' 
+                  var lyrics = $('.lyrics').text()
+                  lyrics = lyrics ? lyrics : 'RETRIEVAL ERROR' 
                   console.log('test1', lyrics)
                   return {
                     lyrics,
