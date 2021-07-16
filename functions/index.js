@@ -32,9 +32,12 @@ app.get('/auth', (req, res) => {
     res.redirect(`https://api.genius.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=me&state=SOME_STATE_VALUE&response_type=code`)
   })
   
+  
 
 app.get('/home', async (req, res) => { //change name to auth_success
     const requestToken = req.query.code
+    const userInput = {songSearchKeywords:"kendrick lamar dna"}
+
   console.log('hit backend')
   return await fetch(`https://api.genius.com/oauth/token?client_id=${clientId}&client_secret=${clientSecret}&code=${requestToken}&grant_type=${grant_type}&redirect_uri=${redirectUri}&response_type=${response_type}`, {
           method: 'post',
@@ -44,18 +47,19 @@ app.get('/home', async (req, res) => { //change name to auth_success
     .then((res)=>{
         return res.json()
     }) 
-      .then((response) => {
+      .then(async (response) => {
 
         const accessToken = response.access_token
+
+
+        var songPath = await songPathGetter(userInput, accessToken)
+
         // redirect the user to the welcome page, along with the access token
         //res.redirect(`/lyric?access_token=${accessToken}`)
         //res.redirect(`http://localhost:3000`)
 
-        //testFunc(accessToken).then(res => console.log('finaltest',res));
-        testFunc(accessToken).then(output => res.status(200).send({ data: output}));
+        await lyricsGetter(accessToken, songPath).then(output => res.status(200).send({ data: output}));
 
-        //return res.status(200).send({ data: testFunc(accessToken)});
-        //return testFunc(accessToken)
       })
       .catch(e => {
           console.log(e)
@@ -63,59 +67,55 @@ app.get('/home', async (req, res) => { //change name to auth_success
           });
 })
 
-async function testFunc(accessToken){
-    const uri = `https://api.genius.com/songs/3035222`
 
-    const options = {
-          method: 'GET',
-          headers: {
-              'Authorization': `Bearer ${accessToken}`
-          },
-    };
+async function songPathGetter(userInput, accessToken){
+
+  const songrequesturi = `https://api.genius.com/search?q=${userInput.songSearchKeywords}`
     
-    return fetch(uri, options).then(async (res) =>  {
-      var output = await res.json()
-        if (res.ok) {
+  const options = {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${accessToken}`
+        },
+  };
+   return fetch(songrequesturi, options)
+   .then(async (res) =>  {
+    var output = await res.json()
+    var songPath = output.response.hits[0].result.path
+    return songPath
 
-            return output
-        } else if (res.status == 409) {
-            throw new Error('IdP configuration already exists. Update it instead.');
-        } else {
-            throw new Error(res.statusText)
-            
-        }
+  })
+}
+
+async function lyricsGetter(accessToken, songPath){
+
+  return fetch(`https://genius.com${songPath}`, {
+    method: 'GET',
+  })
+    .then(response => {
+      if (response.ok) return response.text()
+      throw new Error('Could not get song url ...')
     })
-        .then(json => {
+      .then((htmlText) => {
+        const $ = cheerio.load(htmlText)
 
-          var chosen_song_path = json.response.song.path  
-          //this will eventually fetch rapgenius path to populate user chosen link from above fetch
-            return fetch(`https://genius.com${chosen_song_path}`, {
-              method: 'GET',
-            })
-              .then(response => {
-                if (response.ok) return response.text()
-                throw new Error('Could not get song url ...')
-              })
-                .then((htmlText) => {
-                  const $ = cheerio.load(htmlText)
+        var lyrics = $('.lyrics').text()
 
-                  var lyrics = $('.lyrics').text()
+        if (!lyrics){
+          var lyrics = $('[class^=Lyrics__Container]').text()
+        }
 
-                  if (!lyrics){
-                    var lyrics = $('[class^=Lyrics__Container]').text()
-                  }
-
-                  lyrics = lyrics ? lyrics : 'RETRIEVAL ERROR' 
-                  console.log('test1', lyrics)
-                  return {
-                    lyrics,
-                  }
-                })
-        })
-        .catch(e => {
-          console.log(e)
-          return e
-        });;
+        lyrics = lyrics ? lyrics : 'RETRIEVAL ERROR' 
+        //console.log('test1', lyrics)
+        return {
+          lyrics,
+        }
+      })
+// })
+.catch(e => {
+console.log(e)
+return e
+});;
 
 }
 
@@ -129,7 +129,6 @@ async function testFunc(accessToken){
     {
       method: 'GET',
       Host: 'api-free.deepl.com',
-      //User-Agent: 'YourApp',
       "Content-Length": 54,
       "Content-Type": 'application/x-www-form-urlencoded',
     }
@@ -143,10 +142,7 @@ async function testFunc(accessToken){
   })
 
 
-app.get('/landing', (req, res) => {
 
-
-})
 
 app.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`)
