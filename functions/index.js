@@ -6,8 +6,9 @@ const port = 3035
 var http = require('http');
 const https = require('https');
 
+
 const cors = require('cors')//({origin: true});
-app.use(cors({ origin: true }));
+app.use(cors({ origin: true })); //neccessary for preflght request
 
 var axios = require('axios');
 const fetch = require('node-fetch');
@@ -15,16 +16,17 @@ const cheerio = require('cheerio');
 const { access } = require('fs');
 
 
+const config = require("./configs/devConfig.json");
+//const config = require("./configs/prodConfig.json"); //for produc env
 
-const clientId = 'zMNZDYvktFEeAK3Qujfyrt5ActZwYpvvlJwATeprRbLAz3hxp2rZpX3YSHqzRhDC';
-const clientSecret = 'gfYzi2KJWBeWNRxklmBeOvSeYkaPqPlp1-AWRR4rEp2x4aLB-kkBHbUVesAg84UQdYAMz9ood7Ygn2-iCrMK0Q';
+ const clientId = config.clientId//'zMNZDYvktFEeAK3Qujfyrt5ActZwYpvvlJwATeprRbLAz3hxp2rZpX3YSHqzRhDC';
+ const clientSecret = config.clientSecret //'gfYzi2KJWBeWNRxklmBeOvSeYkaPqPlp1-AWRR4rEp2x4aLB-kkBHbUVesAg84UQdYAMz9ood7Ygn2-iCrMK0Q';
 //const redirectUri = 'http://localhost:3035/home'; //for functions
-const redirectUri = 'http://localhost:3000/landing'; //for react site
+const redirectUri = config.redirectUri; //for react site
 
-const grant_type = "authorization_code";
-const response_type = "code";
-
-const deeplAccessCode = "11d8971a-364c-d165-718c-27f9ace7150c:fx";
+const grant_type = config.grant_type;
+const response_type = config.response_type;
+const deeplAccessCode = config.deeplAccessCode;
 
 //try blocks
 
@@ -36,7 +38,7 @@ app.get('/auth', (req, res) => {
 
 app.get('/home', async (req, res) => { //change name to auth_success
     const requestToken = req.query.code
-    const userInput = {songSearchKeywords:"kendrick lamar dna"}
+    const userInput = {songSearchKeywords:"doja cat juicy"}
 
   console.log('hit backend')
   return await fetch(`https://api.genius.com/oauth/token?client_id=${clientId}&client_secret=${clientSecret}&code=${requestToken}&grant_type=${grant_type}&redirect_uri=${redirectUri}&response_type=${response_type}`, {
@@ -64,10 +66,9 @@ app.get('/home', async (req, res) => { //change name to auth_success
         
         var translatedSongPathLyrics = (await translationGetter(songPathLyrics)).translations[0].text//.translations.text
 
-        // console.log(translatedSongPathLyrics.translations[0].text)
-        // console.log(JSON.stringify(translatedSongPathLyrics.translations[0].text))
-        //console.log(JSON.stringify(translatedSongPathLyrics))
+        //var translatedSongPathLyrics = 
 
+        
         console.log(translatedSongPathLyrics)
 
         
@@ -94,6 +95,7 @@ async function songPathGetter(userInput, accessToken){
    return fetch(songrequesturi, options)
    .then(async (res) =>  {
     var output = await res.json()
+    console.log('test1', output)
     var songPath = output.response.hits[0].result.path
     return songPath
 
@@ -106,20 +108,30 @@ async function lyricsGetter(accessToken, songPath){
     method: 'GET',
   })
     .then(response => {
-      if (response.ok) return response.text()
+      if (response.ok) {
+        //console.log(response)
+        return response.text()
+      }
       throw new Error('Could not get song url ...')
     })
       .then((htmlText) => {
         const $ = cheerio.load(htmlText)
+        //console.log('test52', htmlText)
 
         var lyrics = $('.lyrics').text()
+        //var lyrics = $('.lyrics').html()
 
         if (!lyrics){
           var lyrics = $('[class^=Lyrics__Container]').text()
+          //console.log("test3",lyrics)
         }
+ 
+        //console.log('test32', $('[class^=Lyrics__Container]').merge.html())
+        // console.log('test32', $('[class^=Lyrics__Container]').attr('class'))
+        //console.log('test32', $('[class^=Lyrics__Container]').xml())
 
         lyrics = lyrics ? lyrics : 'RETRIEVAL ERROR' 
-        //console.log('test1', lyrics)
+        console.log('test1', lyrics)
         return {
           lyrics,
         }
