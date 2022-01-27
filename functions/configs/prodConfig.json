@@ -1,0 +1,9 @@
+{
+  "APP_POINTER": "PROD",
+  "clientId" : "zMNZDYvktFEeAK3Qujfyrt5ActZwYpvvlJwATeprRbLAz3hxp2rZpX3YSHqzRhDC",
+  "clientSecret" : "gfYzi2KJWBeWNRxklmBeOvSeYkaPqPlp1-AWRR4rEp2x4aLB-kkBHbUVesAg84UQdYAMz9ood7Ygn2-iCrMK0Q",
+  "redirectUri" : "http://localhost:3000/landing",
+  "grant_type" : "authorization_code",
+  "response_type" : "code",
+  "deeplAccessCode" : "11d8971a-364c-d165-718c-27f9ace7150c:fx"
+}
