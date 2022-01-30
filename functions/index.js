@@ -2,84 +2,71 @@ const functions = require('firebase-functions');
 
 const express = require('express')
 const app = express()
-const port = 3035
 var http = require('http');
 const https = require('https');
 
 
-const cors = require('cors')//({origin: true});
-app.use(cors({ origin: true })); //neccessary for preflght request
-
-var axios = require('axios');
+const cors = require('cors')({origin: true});
+app.use(cors);
 const fetch = require('node-fetch');
 const cheerio = require('cheerio');
-const { access } = require('fs');
 
 
 const config = require("./configs/devConfig.json");
 //const config = require("./configs/prodConfig.json"); //for produc env
 
- const clientId = config.clientId//'zMNZDYvktFEeAK3Qujfyrt5ActZwYpvvlJwATeprRbLAz3hxp2rZpX3YSHqzRhDC';
- const clientSecret = config.clientSecret //'gfYzi2KJWBeWNRxklmBeOvSeYkaPqPlp1-AWRR4rEp2x4aLB-kkBHbUVesAg84UQdYAMz9ood7Ygn2-iCrMK0Q';
-//const redirectUri = 'http://localhost:3035/home'; //for functions
+const clientId = config.clientId
+const clientSecret = config.clientSecret
 const redirectUri = config.redirectUri; //for react site
-
 const grant_type = config.grant_type;
 const response_type = config.response_type;
 const deeplAccessCode = config.deeplAccessCode;
-
-//try blocks
-
-app.get('/auth', (req, res) => {
-    res.redirect(`https://api.genius.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=me&state=SOME_STATE_VALUE&response_type=code`)
-  })
-  
   
 
-app.get('/home', async (req, res) => { //change name to auth_success
-    const requestToken = req.query.code
-    const userInput = {songSearchKeywords:"doja cat juicy"}
 
-  console.log('hit backend')
-  return await fetch(`https://api.genius.com/oauth/token?client_id=${clientId}&client_secret=${clientSecret}&code=${requestToken}&grant_type=${grant_type}&redirect_uri=${redirectUri}&response_type=${response_type}`, {
-          method: 'post',
-          headers: { 'Content-Type': 'application/json' },
-        })
+const homeFunc = async (req, res) => {
+  app.use(cors);
 
-    .then((res)=>{
-        return res.json()
-    }) 
-      .then(async (response) => {
+  const requestToken = req.query.code
+  const userInput = {songSearchKeywords:"doja cat juicy"}
 
-        const accessToken = response.access_token
+console.log('hit backend', new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}))
 
-
-        var songPath = await songPathGetter(userInput, accessToken)
-
-        // redirect the user to the welcome page, along with the access token
-        //res.redirect(`/lyric?access_token=${accessToken}`)
-        //res.redirect(`http://localhost:3000`)
-
-        // await lyricsGetter(accessToken, songPath)
-        // .then(output => res.status(200).send({ data: output}));
-        var songPathLyrics = (await lyricsGetter(accessToken, songPath)).lyrics
+return await fetch(`https://api.genius.com/oauth/token?client_id=${clientId}&client_secret=${clientSecret}&code=${requestToken}&grant_type=${grant_type}&redirect_uri=${redirectUri}&response_type=${response_type}`, {
+        method: 'post',
+        headers: { 'Content-Type': 'application/json' },
         
-        var translatedSongPathLyrics = (await translationGetter(songPathLyrics)).translations[0].text//.translations.text
-
-        //var translatedSongPathLyrics = 
-
-        
-        console.log(translatedSongPathLyrics)
-
-        
-        return res.status(200).send({ data: {lyrics: songPathLyrics, translatedLyrics:translatedSongPathLyrics}})
-
       })
-      .catch(e => {
-          console.log(e)
-          return res.sendStatus(400);
-          });
-})
+  .then((res)=>{
+    if (res.ok){
+        return res.json()
+    } else {
+      return Promise.reject(res); // 2. reject instead of throw
+    }
+  }) 
+    .then(async (response) => {
+
+      const accessToken = response.access_token
+
+
+      var songPath = await songPathGetter(userInput, accessToken)
+
+      var songPathLyrics = (await lyricsGetter(accessToken, songPath)).lyrics
+      
+      var translatedSongPathLyrics = (await translationGetter(songPathLyrics)).translations[0].text//.translations.text
+      
+      console.log(translatedSongPathLyrics)
+
+      
+      return res.status(200).send({ data: {lyrics: songPathLyrics, translatedLyrics:translatedSongPathLyrics}})
+    })
+    .catch(e => {
+        console.log(e)
+        return res.sendStatus(400);
+        });
+        
+};
+app.use(homeFunc)
 
 
 async function songPathGetter(userInput, accessToken){
@@ -143,7 +130,6 @@ return e
 });;
 
 }
-
 
 
 async function translationGetter(originalLyrics){
@@ -238,24 +224,8 @@ async function translationGetter(originalLyrics){
   })
 
 
-
-
-app.listen(port, () => {
-    console.log(`Example app listening at http://localhost:${port}`)
-  })
-
-
-
-
-
-
-
-
-
   
-// // Create and Deploy Your First Cloud Functions
-// // https://firebase.google.com/docs/functions/write-firebase-functions
-//
+
 exports.getLyrics = functions.https.onRequest((request, response) => {
   functions.logger.info("Hello logs!", {structuredData: true});
   response.send("Hello from Firebase!");
@@ -274,16 +244,4 @@ function parseSongHTML(htmlText) {
   }
 }
 
-
-//example fetch code w axios
-    // axios({
-    //   // make a POST request
-    //   method: 'post',
-    //   // to the Github authentication API, with the client ID, client secret
-    //   // and request token
-    //   url: `https://api.genius.com/oauth/token?client_id=${clientId}&client_secret=${clientSecret}&code=${requestToken}&grant_type=${grant_type}&redirect_uri=${redirectUri}&response_type=${response_type}`,
-    //   // Set the content type header, so that we get the response in JSOn
-    //   headers: {
-    //        accept: 'application/json'
-    //   }
-    // })
+exports.app = functions.https.onRequest(app);
