@@ -49,16 +49,16 @@ return await fetch(`https://api.genius.com/oauth/token?client_id=${clientId}&cli
       const accessToken = response.access_token
 
 
-      var songPath = await songPathGetter(userInput, accessToken)
+      var songMetadata = await songMetadataGetter(userInput, accessToken)
 
-      var songPathLyrics = (await lyricsGetter(accessToken, songPath)).lyrics
+      var songMetadataLyrics = (await lyricsGetter(accessToken, songMetadata.path)).lyrics
       
-      var translatedSongPathLyrics = (await translationGetter(songPathLyrics)).translations[0].text//.translations.text
+      var translatedsongMetadataLyrics = (await translationGetter(songMetadataLyrics)).translations[0].text//.translations.text
       
-      console.log(translatedSongPathLyrics)
+      console.log(translatedsongMetadataLyrics)
 
       
-      return res.status(200).send({ data: {lyrics: songPathLyrics, translatedLyrics:translatedSongPathLyrics}})
+      return res.status(200).send({ data: {lyrics: songMetadataLyrics, translatedLyrics:translatedsongMetadataLyrics, imageLink:songMetadata.primary_artist.image_url}})
     })
     .catch(e => {
         console.log(e)
@@ -69,7 +69,7 @@ return await fetch(`https://api.genius.com/oauth/token?client_id=${clientId}&cli
 app.use(homeFunc)
 
 
-async function songPathGetter(userInput, accessToken){
+async function songMetadataGetter(userInput, accessToken){
 
   const songrequesturi = `https://api.genius.com/search?q=${userInput.songSearchKeywords}`
     
@@ -82,16 +82,16 @@ async function songPathGetter(userInput, accessToken){
    return fetch(songrequesturi, options)
    .then(async (res) =>  {
     var output = await res.json()
-    console.log('test1', output)
-    var songPath = output.response.hits[0].result.path
-    return songPath
+    console.log('songMetadatagetter test', output.response.hits[0].result.primary_artist.image_url)
+    var songMetadata = output.response.hits[0].result
+    return songMetadata
 
   })
 }
 
-async function lyricsGetter(accessToken, songPath){
+async function lyricsGetter(accessToken, songMetadata){
 
-  return fetch(`https://genius.com${songPath}`, {
+  return fetch(`https://genius.com${songMetadata}`, {
     method: 'GET',
   })
     .then(response => {
