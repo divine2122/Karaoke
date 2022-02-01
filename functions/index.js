@@ -33,6 +33,12 @@ const homeFunc = async (req, res) => {
 
   
 console.log('hit backend',req.query, new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}))
+// let words = ['Hello', 'World']
+// words.forEach((word,i)=>
+// {
+//   (words[i] = word.split('').reverse().join('')).toLowerCase()
+// })
+// console.log(words)
 
 return await fetch(`https://api.genius.com/oauth/token?client_id=${clientId}&client_secret=${clientSecret}&code=${requestToken}&grant_type=${grant_type}&redirect_uri=${redirectUri}&response_type=${response_type}`, {
         method: 'post',
@@ -228,12 +234,12 @@ async function translationGetter(originalLyrics){
 
   
 
-exports.getLyrics = functions.https.onRequest((request, response) => {
-  functions.logger.info("Hello logs!", {structuredData: true});
-  response.send("Hello from Firebase!");
-  console.log(response)
+// exports.getLyrics = functions.https.onRequest((request, response) => {
+//   functions.logger.info("Hello logs!", {structuredData: true});
+//   response.send("Hello from Firebase!");
+//   console.log(response)
 
-});
+// });
 
 
 
