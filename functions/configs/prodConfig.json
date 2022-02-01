@@ -1,9 +1,0 @@
-{
-  "APP_POINTER": "PROD",
-  "clientId" : "gNQtpUsgmZprjocmiuK-wmSqRk-ebjrGxAqDmCKtC-2Zc879RBxFIaQPtuRwMXhY",
-  "clientSecret" : "H5QwlA3FVBlMbA1y-hr91Vimo9X4KMWv2iuyAmMN6EQz4lerT7yk70qeqXz7TUwq0J5C114Xa-OSKF_s4-8htQ",
-  "redirectUri" : "https://karaoke-576dc.web.app/landing",
-  "grant_type" : "authorization_code",
-  "response_type" : "code",
-  "deeplAccessCode" : "11d8971a-364c-d165-718c-27f9ace7150c:fx"
-}
