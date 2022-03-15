@@ -104,38 +104,87 @@ async function lyricsGetter(accessToken, songMetadata){
   })
     .then(response => {
       if (response.ok) {
-        //console.log(response)
         return response.text()
       }
       throw new Error('Could not get song url ...')
     })
       .then((htmlText) => {
-        const $ = cheerio.load(htmlText)
-        //console.log('test52', htmlText)
+        const $ = cheerio.load(htmlText//, {
+        //   xml: {
+        //     xmlMode: false,
+        //   },
+        // }
+        );
+        //console.log('test01', $('[class^=Lyrics__Container]').remove("a").html())
+        //console.log('test02', $('.lyrics')._root["0"].children)
+        //console.log('test0', $('div'))
+        //console.log('test03', $('p[class^=Lyrics__Container]').html())
 
-        var lyrics = $('.lyrics').text()
-        //var lyrics = $('.lyrics').html()
+        //currently, lyrics var is getting null. data comes from the lyrics_container val
+        var lyrics = $('.lyrics').text() //OG CODE
+
+        // var test0=$.html()
+        // var test1=$('p').text()
+        // var test2=$('span').text()
+        // var test3=$('a').text()
+        // var test4=$('body').html()
+        //var test5=$('button.react-share__ShareButton').html() //this one works
+        //var test5=$('button.react-share__Share').html() //this one DOESNT work
+        //var test6=$('button.LabelWithIcon__Container-sc-1ri57wg-0 jcROPx').html()//doesnt work
+        
+        
+        // var test6=$('button[class^=LabelWithIcon__Container]').html()//this one work
+
+        // var test7 = $('[class^=Lyrics__Container]')
+        // console.log(test7.find('a').remove().html())
+
+        //console.log(test7)
+///let titles = $('.episode-title').map((i, el) => $(el).text()).get();
+
 
         if (!lyrics){
-          var lyrics = $('[class^=Lyrics__Container]').text()
-          //console.log("test3",lyrics)
+          //var lyrics = $('[class^=Lyrics__Container]').text() //ogcode
+
+           var list = [];
+
+          //var lyrics = $('[class^=Lyrics__Container]').contents().first().text(); //next best lead. returns first line perfectly formatted. try to figure how to get rest of lines too
+          var lyrics = $('[class^=Lyrics__Container]').contents().each((i,el)=>{
+            //this chunk doesnt include hyperlinked/annoted lyrics on page
+            // if (el.type=='text'){
+            //   list.push($(el).text())
+            //   console.log($(el).text())
+            // }
+
+            if ($(el).text().length > 1){
+              list.push($(el).text())
+            }
+          })
+          console.log(list)
+          lyrics=list
+
+          // $('li').each(function (i, elem) {
+          //   fruits[i] = $(this).text();
+          // }); 
+          //console.log('test',lyrics) 
+
+//           var list = [];
+//           $('[class^=Lyrics__Container]').find('a').each(function (index, element) {
+//             list.push($(element).text());
+//           });
+// console.log(list)
+
         }
- 
-        //console.log('test32', $('[class^=Lyrics__Container]').merge.html())
-        // console.log('test32', $('[class^=Lyrics__Container]').attr('class'))
-        //console.log('test32', $('[class^=Lyrics__Container]').xml())
 
         lyrics = lyrics ? lyrics : 'RETRIEVAL ERROR' 
-        console.log('test1', lyrics)
+        //console.log('test1', lyrics)
         return {
           lyrics,
         }
       })
-// })
-.catch(e => {
-console.log(e)
-return e
-});;
+        .catch(e => {
+        console.log(e)
+        return e
+        });;
 
 }
 
