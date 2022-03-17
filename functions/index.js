@@ -145,33 +145,48 @@ async function lyricsGetter(accessToken, songMetadata){
         if (!lyrics){
           //var lyrics = $('[class^=Lyrics__Container]').text() //ogcode
 
-           var list = [];
+          var list = [];
 
-          //var lyrics = $('[class^=Lyrics__Container]').contents().first().text(); //next best lead. returns first line perfectly formatted. try to figure how to get rest of lines too
           var lyrics = $('[class^=Lyrics__Container]').contents().each((i,el)=>{
-            //this chunk doesnt include hyperlinked/annoted lyrics on page
-            // if (el.type=='text'){
-            //   list.push($(el).text())
-            //   console.log($(el).text())
-            // }
-
             if ($(el).text().length > 1){
               list.push($(el).text())
             }
           })
-          console.log(list)
-          lyrics=list
+          
+            //getting rid of annotation chunks:
+            // do one pass iteration thru each string. compare a[i] to a[i-1] and see
+            //if previous is lowercase AND current is uppercase (beware of how numbers are falsely interpreted w isuppercase/lowercase)
+            //will eventually do check for if previous is certain symbols as well
+            //when condition is met, splice rest of that index string to next index.
+            //make sure loop continues same conditional check for the string that was just moved forward
 
-          // $('li').each(function (i, elem) {
-          //   fruits[i] = $(this).text();
-          // }); 
-          //console.log('test',lyrics) 
 
-//           var list = [];
-//           $('[class^=Lyrics__Container]').find('a').each(function (index, element) {
-//             list.push($(element).text());
-//           });
-// console.log(list)
+          //data processing step
+          for (var i=0; i<list.length; i++){
+            let tempArray = []
+            let pointer = 0
+
+            for (var j = 0; j < list[i].length; j++) {
+              let currentChar=list[i].charAt(j);
+              let prevChar=list[i].charAt(j-1);
+
+              //if (i==3){
+
+                if (isLowerCase(prevChar) && isUpperCase(currentChar)){
+                 // console.log('splitpoint', prevChar, currentChar)
+                  tempArray.push(list[i].slice(pointer,j))
+                  pointer=j
+                }
+
+              //}
+            }
+            //handle if endpointer doesnt equal length of string
+            if ((pointer !== list[i].length) && (tempArray.length>0)){
+              tempArray.push(list[i].slice(pointer))
+              list.splice(i,1, ...tempArray)
+            }
+          }
+          console.log('final lyic', list)
 
         }
 
@@ -186,6 +201,24 @@ async function lyricsGetter(accessToken, songMetadata){
         return e
         });;
 
+}
+function isUpperCase(myString) { 
+  //rules out if char is symbol or number
+  if (myString.toUpperCase() == myString.toLowerCase()){
+    return false
+  }
+  return (myString == myString.toUpperCase()); 
+}   
+
+function isLowerCase(myString) {
+  //treat sentence terminating char as lowercase so if following char is capital, we recognize end of sentence.
+  if (myString=='?' || myString=='.' || myString=='!' || myString=='\'' || myString=='\)'){
+    return true
+  }
+  if (myString.toUpperCase() == myString.toLowerCase()){
+    return false
+  }
+  return (myString == myString.toLowerCase()); 
 }
 
 
