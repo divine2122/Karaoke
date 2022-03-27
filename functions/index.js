@@ -153,13 +153,6 @@ async function lyricsGetter(accessToken, songMetadata){
             }
           })
           
-            //getting rid of annotation chunks:
-            // do one pass iteration thru each string. compare a[i] to a[i-1] and see
-            //if previous is lowercase AND current is uppercase (beware of how numbers are falsely interpreted w isuppercase/lowercase)
-            //will eventually do check for if previous is certain symbols as well
-            //when condition is met, splice rest of that index string to next index.
-            //make sure loop continues same conditional check for the string that was just moved forward
-
 
           //data processing step
           for (var i=0; i<list.length; i++){
@@ -170,15 +163,10 @@ async function lyricsGetter(accessToken, songMetadata){
               let currentChar=list[i].charAt(j);
               let prevChar=list[i].charAt(j-1);
 
-              //if (i==3){
-
                 if (isLowerCase(prevChar) && isUpperCase(currentChar)){
-                 // console.log('splitpoint', prevChar, currentChar)
                   tempArray.push(list[i].slice(pointer,j))
                   pointer=j
                 }
-
-              //}
             }
             //handle if endpointer doesnt equal length of string
             if ((pointer !== list[i].length) && (tempArray.length>0)){
@@ -186,12 +174,15 @@ async function lyricsGetter(accessToken, songMetadata){
               list.splice(i,1, ...tempArray)
             }
           }
-          console.log('final lyic', list)
+          //join array and separate each element by newline symbol
+          var plainTextLyrics = list.map((x)=>{return x;}).join(" \n")
+          console.log('final lyic', plainTextLyrics)
+
+          lyrics=plainTextLyrics
 
         }
 
         lyrics = lyrics ? lyrics : 'RETRIEVAL ERROR' 
-        //console.log('test1', lyrics)
         return {
           lyrics,
         }
